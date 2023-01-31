@@ -3,6 +3,16 @@ class CommentsController < ApplicationController
 
   before_action :ensure_current_user_is_owner, only: [:edit, :update, :destroy]
 
+  before_action :is_an_authorized_user, only: [:create, :destroy]
+
+  def is_an_authorized_user
+    @photo = Photo.find(params.fetch(:comment).fetch(:photo_id))
+
+    if @photo.owner.private? && @photo.owner == !current_user && !current_user.leaders.include?(@photo.owner)
+      redirect_back(fallback_location: root_url, alert: "Not authorized")
+    end
+  end
+
   def ensure_current_user_is_owner
     if current_user != @comment.author
       redirect_back(fallback_location: root_url, alert: "You are not authorized for that")
